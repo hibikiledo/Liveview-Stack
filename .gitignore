@@ -1,0 +1,8 @@
+.Python
+.idea/
+bin/
+include/
+input.jpg
+lib/
+pip-selfcheck.json
+
