@@ -19,28 +19,23 @@ def eat_image(filename, ip, port):
 
 def usage():
     print("Usage ...")
-    print("python eater.py -fps <fps> -o <output path>")
+    print("python eater.py -t <target ip> -p <port> -o <output path>")
 
 def main(argv):
 
     # Default values for customizable parameters
     ip = None
     port = None
-    fps = None
     output_path = None
-    delay_time = 40.0 / 1000.0
 
     # Get user settings for fps which will overwrite the default one
     try:
-        opts, args = getopt.getopt(argv[1:], "t:p:f:o:", ['target=','port=', 'fps=', 'output='])
+        opts, args = getopt.getopt(argv[1:], "t:p:o:", ['target=','port=', 'output='])
     except getopt.GetoptError:
         usage()
         sys.exit(2)
 
     for (opt, arg) in opts:
-        if opt in ('-f', '--fps='):
-            fps = float(arg)
-            delay_time = (1000.0 / fps ) / 1000.0
         if opt in ('-t', '--target'):
             ip = arg
         if opt in ('-p', '--port'):
@@ -48,16 +43,12 @@ def main(argv):
         if opt in ('-o', '--output'):
             output_path = arg
 
-    # Counter for creating unique image frame filename
-    counter = 0
-
     # Perform forever eating until Ctrl+C is received
-    print("Eating images from {}:{} @ {} fps".format(ip, port, fps))
+    print("Eating images from {}:{}".format(ip, port))
     while True:
-        eat_image("{}/frame-{}.png".format(output_path, counter), ip, port)
-        counter += 1
-        # Delay for specified amount
-        time.sleep(delay_time)
+        mark = time.time()
+        eat_image(output_path, ip, port)
+        print((time.time() - mark) * 10)
 
 if __name__ == '__main__':
     main(sys.argv)
