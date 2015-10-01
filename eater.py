@@ -46,9 +46,7 @@ def main(argv):
     # Perform forever eating until Ctrl+C is received
     print("Eating images from {}:{}".format(ip, port))
     while True:
-        mark = time.time()
         eat_image(output_path, ip, port)
-        print((time.time() - mark) * 10)
 
 if __name__ == '__main__':
     main(sys.argv)
