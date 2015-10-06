@@ -1,55 +1,29 @@
+import liveviewstack
+
 import eventlet
 
-import getopt
-import time
-import sys
+import os
 
-def eat_image(filename, ip, port):
-    s = eventlet.connect((ip, port))
-    output_bytes = bytearray()
+running = True
 
-    while True:
-        data = s.recv(4096)
-        output_bytes.extend(data)
-        if len(data) == 0:            
-            break
+def eater(ip, port, output_partial_path, output_path):
 
-    output_file = open(filename, 'wb')
-    output_file.write(output_bytes)
+    print("eater started")
 
-def usage():
-    print("Usage ...")
-    print("python eater.py -t <target ip> -p <port> -o <output path>")
+    while running:
+        s = eventlet.connect((ip, port))
+        output_bytes = bytearray()
 
-def main(argv):
+        while True:
+            data = s.recv(4096)
+            output_bytes.extend(data)
+            if len(data) == 0:
+                break
 
-    # Default values for customizable parameters
-    ip = None
-    port = None
-    output_path = None
+        output_file = open(output_partial_path, 'wb')
+        output_file.write(output_bytes)
+        output_file.close()
 
-    # Get user settings for fps which will overwrite the default one
-    try:
-        opts, args = getopt.getopt(argv[1:], "t:p:o:", ['target=','port=', 'output='])
-    except getopt.GetoptError:
-        usage()
-        sys.exit(2)
+        os.rename(output_partial_path, output_path)
 
-    for (opt, arg) in opts:
-        if opt in ('-t', '--target'):
-            ip = arg
-        if opt in ('-p', '--port'):
-            port = int(arg)
-        if opt in ('-o', '--output'):
-            output_path = arg
-
-    # Perform forever eating until Ctrl+C is received
-    print("Eating images from {}:{}".format(ip, port))
-    while True:
-        eat_image(output_path, ip, port)
-
-if __name__ == '__main__':
-    main(sys.argv)
-
-
-
+    print("eater stopped")

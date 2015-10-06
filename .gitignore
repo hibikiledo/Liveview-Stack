@@ -6,3 +6,5 @@ input.jpg
 lib/
 pip-selfcheck.json
 tmp/
+.DS_Store
+__pycache__/
