@@ -12,6 +12,8 @@ raspimjpeg_pid = None
 
 def SIGINT_handler(signum, frame):
 
+    global stack_type
+
     if stack_type == 'server':
         streamer.running = False
         eater.running = False
@@ -28,7 +30,6 @@ if __name__ == '__main__':
     signal.signal(signal.SIGINT, SIGINT_handler)
 
     # Get stack type
-    global stack_type
     stack_type = sys.argv[1]
 
     if stack_type == 'server':
@@ -62,18 +63,14 @@ if __name__ == '__main__':
         '''
 
         # Create processes
-        e = Process(target=raspimjpeg.server, args=())
         f = Process(target=feeder.server, args=('0.0.0.0', 1234, '/dev/shm/mjpeg/cam.jpg'))
-        g = subprocess.Popen('3rd_bin/raspimjpeg', '--config', 'raspimjpeg.config')
+        g = subprocess.Popen(['3rd_bin/raspimjpeg --config 3rd_bin/raspimjpeg.config'], shell=True, preexec_fn=os.setsid)
 
         # Update shared variables
-        global raspimjpeg_pid
         raspimjpeg_pid = g.pid
 
         # Start processes
-        e.start()
         f.start()
 
         # Join all process back for clean termination
-        e.join()
         f.join()
