@@ -1,14 +1,16 @@
 
-import packet
-import time
 import os
+import time
+import packet
 import eventlet
 import threading
+import subprocess
 
 running = True
 
 recorder_thread = None
 recorder_running = True
+
 
 def record(src_path, output_path):
 
@@ -39,6 +41,15 @@ def record(src_path, output_path):
         output_file.close()
 
         counter += 1
+
+        time.sleep(0.005)
+
+    # lastly convert image frames into
+    src_frames = os.path.join(output_path, 'frame-%d.jpg')
+    video_filename = os.path.join(output_path, '_movie.mp4')
+
+    # convert image frames into videos
+    subprocess.run(args=['avconv', '-framerate', '25', '-b', '65536k', '-i', src_frames, video_filename])
 
     print("recorder is dead ..")
 
