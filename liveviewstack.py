@@ -1,15 +1,30 @@
+from multiprocessing import Process
 import signal
 import sys
-import os
 
-from multiprocessing import Process
-import subprocess
+import socket
+import time
 
-from processes import streamer, eater, digester, recorder, feeder, raspimjpeg
+from processes import streamer, eater, digester, recorder, feeder
+import packet
 
+# specify whether this running stack is robot stack or server stack
 stack_type = None
-raspimjpeg_pid = None
 
+'''
+    Fake a connection to specified port.
+      This will unblock call to accept() and process can terminate gracefully
+'''
+def dummy_connect(PORT):
+    sock = socket.socket()
+    sock.connect(('127.0.0.1', PORT))
+    sock.close()
+
+'''
+    Handle SIGINT
+      Setting running flags for each process to false.
+      And send dummy requests to unblock call to accept()
+'''
 def SIGINT_handler(signum, frame):
 
     global stack_type
@@ -19,9 +34,12 @@ def SIGINT_handler(signum, frame):
         eater.running = False
         digester.running = False
         recorder.running = False
+        dummy_connect(5000)
+        dummy_connect(5001)
 
     elif stack_type == 'robot':
-        os.killpg(raspimjpeg_pid, signal.SIGTERM)
+        feeder.running = False
+        dummy_connect(1234)
 
 
 if __name__ == '__main__':
@@ -39,19 +57,52 @@ if __name__ == '__main__':
         '''
 
         # Create processes
-        a = Process(target=eater.eater, args=('192.168.2.100', 1234, 'tmp/full.partial.jpg', 'tmp/full.jpg'))
+        #a = Process(target=eater.eater, args=('192.168.2.49', 1234, 'tmp/full.partial.jpg', 'tmp/full.jpg'))
         b = Process(target=digester.digester, args=('tmp/full.jpg', 'tmp/stream.partial.jpg', 'tmp/stream.jpg'))
-        c = Process(target=streamer.streamer, args=(1234, 'tmp/stream.jpg'))
-        d = Process(target=recorder.server, args=('0.0.0.0', 5001))
+        c = Process(target=streamer.streamer, args=(5000, 'tmp/stream.jpg'))
+        d = Process(target=recorder.server, args=('0.0.0.0', 5001, 'tmp/full.jpg'))
 
         # Start all process
-        a.start()
+        #a.start()
         b.start()
         c.start()
         d.start()
 
+
+        for i in range(2):
+
+            time.sleep(2)
+
+            # Create dummy packet for testing our recorder
+            builder = packet.BananaPacketBuilder()
+            builder.set_type(packet.REQ_TYPE)
+            builder.set_command(packet.COMMAND_ON)
+            builder.set_resolution(packet.RES_480)
+
+            sock = socket.socket()
+            sock.connect(('127.0.0.1', 5001))
+            packet_bytes = bytes((builder.create(), ))
+            sock.sendall(packet_bytes)
+            sock.close()
+
+            time.sleep(2)
+
+            # Create dummy packet for testing our recorder
+            builder = packet.BananaPacketBuilder()
+            builder.set_type(packet.REQ_TYPE)
+            builder.set_command(packet.COMMAND_OFF)
+            builder.set_resolution(packet.RES_480)
+
+            sock = socket.socket()
+            sock.connect(('127.0.0.1', 5001))
+            packet_bytes = bytes((builder.create(), ))
+            sock.sendall(packet_bytes)
+            sock.close()
+
+
+
         # Join all process back for clean termination
-        a.join()
+        #a.join()
         b.join()
         c.join()
         d.join()
@@ -63,14 +114,11 @@ if __name__ == '__main__':
         '''
 
         # Create processes
-        f = Process(target=feeder.server, args=('0.0.0.0', 1234, '/dev/shm/mjpeg/cam.jpg'))
-        g = subprocess.Popen(['3rd_bin/raspimjpeg --config 3rd_bin/raspimjpeg.config'], shell=True, preexec_fn=os.setsid)
-
-        # Update shared variables
-        raspimjpeg_pid = g.pid
+        f = Process(target=feeder.server, args=('0.0.0.0', 1234, 'sample.jpg'))
 
         # Start processes
         f.start()
+
 
         # Join all process back for clean termination
         f.join()

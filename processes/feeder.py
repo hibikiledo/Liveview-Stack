@@ -6,6 +6,8 @@ import eventlet
     ---- This application is meant to be run on Raspberry Pi.
 '''
 
+running = True
+
 def handle(s, addr, image_path):
     image_file = open(image_path, 'rb')
     image_bytes = image_file.read()
@@ -18,7 +20,7 @@ def server(host, port, image_path):
     server_socket = eventlet.listen((host, port))
     pool = eventlet.GreenPool(10)
 
-    while True:
+    while running:
         client_socket, address = server_socket.accept()
         pool.spawn_n(handle, client_socket, address, image_path)
 
