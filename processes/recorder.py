@@ -108,13 +108,19 @@ def handler(client_socket, address, src_path):
     client_socket.close()
 
 
-def server(HOST, PORT, src_path):
+def server(config):
 
-    print("Server started on {}:{}".format(HOST, PORT))
+    # Read from configuration file
+    port = int(config['recorder.port'])
+    src_file = config['recorder.source_file']
 
-    server_socket = eventlet.listen((HOST, PORT))
+    print("---- Recorder server started ...")
+    print("PORT:", port)
+    print("Source file:", src_file)
+
+    server_socket = eventlet.listen(('0.0.0.0', port))
     thread_pool = eventlet.GreenPool(10)
 
     while running:
-        clientsocket, addr = server_socket.accept()
-        thread_pool.spawn_n(handler, clientsocket, addr, src_path)
+        client_socket, addr = server_socket.accept()
+        thread_pool.spawn_n(handler, client_socket, addr, src_file)

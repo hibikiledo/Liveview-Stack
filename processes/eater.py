@@ -4,9 +4,19 @@ import os
 
 running = True
 
-def eater(ip, port, output_partial_path, output_path):
+def eater(config):
 
-    print("eater started")
+    # Read from configuration file
+    ip = config['eater.ip']
+    port = int(config['eater.port'])
+    output_partial_filename = config['eater.partial_file']
+    output_filename = config['eater.complete_file']
+
+    print("---- Eater process started ...")
+    print("IP:", ip)
+    print("PORT:", port)
+    print("Output file(partial):", output_partial_filename)
+    print("Output file(complete):", output_filename)
 
     while running:
         s = eventlet.connect((ip, port))
@@ -18,10 +28,10 @@ def eater(ip, port, output_partial_path, output_path):
             if len(data) == 0:
                 break
 
-        output_file = open(output_partial_path, 'wb')
-        output_file.write(output_bytes)
-        output_file.close()
+        partial_output_file = open(output_partial_filename, 'wb')
+        partial_output_file.write(output_bytes)
+        partial_output_file.close()
 
-        os.rename(output_partial_path, output_path)
+        os.rename(output_partial_filename, output_filename)
 
-    print("eater stopped")
+    print("Eater stopped")

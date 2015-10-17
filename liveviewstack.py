@@ -3,10 +3,9 @@ import signal
 import sys
 
 import socket
-import time
 
 from processes import streamer, eater, digester, recorder, feeder
-import packet
+import config_loader
 
 # specify whether this running stack is robot stack or server stack
 stack_type = None
@@ -50,6 +49,9 @@ if __name__ == '__main__':
     # Get stack type
     stack_type = sys.argv[1]
 
+    # Load configuration file
+    config = config_loader.load(sys.argv[2])
+
     if stack_type == 'server':
 
         '''
@@ -57,18 +59,18 @@ if __name__ == '__main__':
         '''
 
         # Create processes
-        #a = Process(target=eater.eater, args=('192.168.2.49', 1234, 'tmp/full.partial.jpg', 'tmp/full.jpg'))
-        b = Process(target=digester.digester, args=('tmp/full.jpg', 'tmp/stream.partial.jpg', 'tmp/stream.jpg'))
-        c = Process(target=streamer.streamer, args=(5000, 'tmp/stream.jpg'))
-        d = Process(target=recorder.server, args=('0.0.0.0', 5001, 'tmp/full.jpg'))
+        a = Process(target=eater.eater, args=(config, ))
+        b = Process(target=digester.digester, args=(config, ))
+        c = Process(target=streamer.streamer, args=(config, ))
+        d = Process(target=recorder.server, args=(config, ))
 
         # Start all process
-        #a.start()
+        a.start()
         b.start()
         c.start()
         d.start()
 
-
+        '''
         for i in range(2):
 
             time.sleep(2)
@@ -98,11 +100,10 @@ if __name__ == '__main__':
             packet_bytes = bytes((builder.create(), ))
             sock.sendall(packet_bytes)
             sock.close()
-
-
+        '''
 
         # Join all process back for clean termination
-        #a.join()
+        a.join()
         b.join()
         c.join()
         d.join()
@@ -118,7 +119,6 @@ if __name__ == '__main__':
 
         # Start processes
         f.start()
-
 
         # Join all process back for clean termination
         f.join()
