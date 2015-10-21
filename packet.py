@@ -29,19 +29,29 @@ RESOLUTIONS = {
     2: 'RES_1080'
 }
 
+MAX_ATTEMPT = 20
+
 '''
     Utility function
     [0] Continue reading for command until get the complete one.
 '''
+
+
 def read_command(s):
+    attempt_count = 0
     byte_count = 0
     command_packet = bytearray()
     # keep reading until get 2 byte (complete command packet)
     while byte_count < 1:
+        # increment attempt
+        attempt_count += 1
         partial = s.recv(1)
         if len(partial) == 1:
             command_packet.append(byte_to_int(partial))
             byte_count += 1
+        # check for fail command
+        if attempt_count > MAX_ATTEMPT:
+            return None
     # return
     return command_packet
 
@@ -50,14 +60,24 @@ def read_command(s):
     Utility function
     [1] Convert byte into integer
 '''
+
+
 def byte_to_int(byte):
     return struct.unpack("B", byte)[0]
+
+'''
+    BananaPacketBuilder
+    [1] Allow programmer to set type, command, and resolution.
+    --- create() build a packet and return as integer.
+'''
 
 
 class BananaPacketBuilder:
 
     def __init__(self):
-        pass
+        self.type = None
+        self.command = None
+        self.resolution = None
 
     def set_type(self, type):
         self.type = type
@@ -96,6 +116,13 @@ class BananaPacketBuilder:
         )
 
 
+'''
+    BananaPacketReader
+    [1] Allow programmer to access type, command, and resolution
+    --- _read() is called automatically to make value accesible
+'''
+
+
 class BananaPacketReader:
 
     def __init__(self, packet):
@@ -127,12 +154,12 @@ class BananaPacketReader:
 
         # handle command ON/OFF
         self.command = (packet & int('00100000', 2)) >> 5
-        if not self.command in COMMANDS.keys():
+        if self.command not in COMMANDS.keys():
             print("Unknown command")
 
         # handle resolution
         self.resolution = (packet & int('00011000', 2)) >> 3
-        if not self.command in RESOLUTIONS.keys():
+        if self.command not in RESOLUTIONS.keys():
             print("Unknown resolution")
 
     def report(self):
