@@ -18,7 +18,7 @@ def handle(s, addr, source_file):
 
 def server(config):
 
-    port = config['feeder.port']
+    port = int(config['feeder.port'])
     source_file = config['feeder.source_file']
 
     print("Server is listening on {}".format(port))
