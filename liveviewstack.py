@@ -115,7 +115,7 @@ if __name__ == '__main__':
         '''
 
         # Create processes
-        f = Process(target=feeder.server, args=('0.0.0.0', 1234, 'sample.jpg'))
+        f = Process(target=feeder.server, args=(config, ))
 
         # Start processes
         f.start()
