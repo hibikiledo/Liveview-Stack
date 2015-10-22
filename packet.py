@@ -1,32 +1,35 @@
 import struct
+from exceptions import *
 
-# Define constants for packet type
-REQ_TYPE = 0
-ACK_TYPE = 1
-
+# Packet Type
+# 10xx xxxx - REQ_TYPE
+# 01xx xxxx - ACK_TYPE
+REQ_TYPE = int('10000000', 2)
+ACK_TYPE = int('01000000', 2)
+TYPE_MASK = int('11000000', 2)
 TYPES = {
-    0: 'REQ_TYPE',
-    1: 'ACK_TYPE'
+    REQ_TYPE: 'REQ_TYPE',
+    ACK_TYPE: 'ACK_TYPE'
 }
 
 # Define constants for commands
-COMMAND_ON = 1
-COMMAND_OFF = 0
-
+COMMAND_ON = int('00100000', 2)
+COMMAND_OFF = int('00000000', 2)
+COMMAND_MASK = int('00100000', 2)
 COMMANDS = {
-    1: 'COMMAND_ON',
-    0: 'COMMAND_OFF'
+    COMMAND_ON: 'COMMAND_ON',
+    COMMAND_OFF: 'COMMAND_OFF'
 }
 
 # Define constants for resolution
-RES_480 = 0
-RES_720 = 1
-RES_1080 = 2
-
+RES_480 = int('00000000', 2)
+RES_720 = int('00001000', 2)
+RES_1080 = int('00010000', 2)
+RES_MASK = int('00011000', 2)
 RESOLUTIONS = {
-    0: 'RES_480',
-    1: 'RES_720',
-    2: 'RES_1080'
+    RES_480: 'RES_480',
+    RES_720: 'RES_720',
+    RES_1080: 'RES_1080'
 }
 
 MAX_ATTEMPT = 20
@@ -80,30 +83,42 @@ class BananaPacketBuilder:
         self.resolution = None
 
     def set_type(self, type):
+        if type not in [REQ_TYPE, ACK_TYPE]:
+            raise UnknownPacketType()
         self.type = type
 
     def set_command(self, command):
+        if command not in [COMMAND_ON, COMMAND_OFF]:
+            raise UnknownCommand()
         self.command = command
 
     def set_resolution(self, resolution):
+        if resolution not in [RES_480, RES_720, RES_1080]:
+            raise UnknownResolution()
         self.resolution = resolution
 
+    def validate(self):
+        for field in [self.type, self.command, self.resolution]:
+            if field is None:
+                return False
+        return True
+
     def create(self):
+
+        if not self.validate():
+            raise IncompletePacket()
 
         # create our request byte
         request = int('00000000', 2)
 
         # handle type
-        if self.type == REQ_TYPE:
-            request |= int('10000000', 2)
-        elif self.type == ACK_TYPE:
-            request |= int('01000000', 2)
+        request |= self.type
 
         # handle command ON/OFF
-        request |= (self.command << 5)
+        request |= self.command
 
         # handle resolution
-        request |= (self.resolution << 3)
+        request |= self.resolution
 
         # return request
         return request
@@ -144,23 +159,28 @@ class BananaPacketReader:
 
     def _read(self):
 
+        if self.packet is None:
+            raise InvalidPacket()
+
         packet = self.packet
 
         # handle Packet types
-        if packet & int('11000000', 2) == int('10000000', 2):
-            self.type = REQ_TYPE
-        elif packet & int('11000000', 2) == int('01000000', 2):
-            self.type = ACK_TYPE
+        if (packet & TYPE_MASK) in [ACK_TYPE, REQ_TYPE]:
+            self.type = packet & TYPE_MASK
+        else:
+            raise UnknownPacketType()
 
         # handle command ON/OFF
-        self.command = (packet & int('00100000', 2)) >> 5
-        if self.command not in COMMANDS.keys():
-            print("Unknown command")
+        if (packet & COMMAND_MASK) in [COMMAND_ON, COMMAND_OFF]:
+            self.command = packet & COMMAND_MASK
+        else:
+            raise UnknownCommand()
 
         # handle resolution
-        self.resolution = (packet & int('00011000', 2)) >> 3
-        if self.command not in RESOLUTIONS.keys():
-            print("Unknown resolution")
+        if (packet & RES_MASK) in [RES_480, RES_720, RES_1080]:
+            self.resolution = packet & RES_MASK
+        else:
+            raise UnknownResolution()
 
     def report(self):
         print(
