@@ -46,16 +46,10 @@ def record(src_path, output_path):
 
     # lastly convert image frames into
     src_frames = os.path.join(output_path, 'frame-%d.jpg')
-    video_filename = os.path.join(output_path, '_movie.mp4')
+    video_filename = os.path.join(output_path, 'movie.mp4')
 
     # convert image frames into videos
-    dev_null = open('/dev/null', 'w')
-    '''
-    subprocess.call(args=['avconv', '-framerate', '25', '-b', '65536k', '-i', src_frames, video_filename],
-                    stdout=dev_null, stderr=subprocess.STDOUT)
-    '''
     subprocess.call(args=['avconv', '-framerate', '25', '-i', src_frames, '-c:v', 'h264', '-crf', '1', video_filename])
-    dev_null.close()
 
     print("recorder is dead ..")
 
