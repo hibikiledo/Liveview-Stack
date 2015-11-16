@@ -1,5 +1,7 @@
 import eventlet
 
+import packet
+
 running = True
 
 def streamer_handler(client_socket, address, image_path):
@@ -11,10 +13,10 @@ def streamer_handler(client_socket, address, image_path):
     client_socket.close()
 
 
-def streamer(config):
+def streamer(config, resolution):
 
     port = int(config['streamer.port'])
-    src_file = config['streamer.source_file']
+    src_file = config['streamer.source_file'].format(packet.RESOLUTIONS.get(resolution))
 
     print("---- Streamer started ...")
     print("PORT:", port)

@@ -1,6 +1,7 @@
 import struct
 from exceptions import *
 
+
 # Packet Type
 # 10xx xxxx - REQ_TYPE
 # 01xx xxxx - ACK_TYPE

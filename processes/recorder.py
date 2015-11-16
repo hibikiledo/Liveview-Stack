@@ -12,7 +12,7 @@ recorder_thread = None
 recorder_running = True
 
 
-def record(src_path, output_path):
+def record(src_path, output_path, resolution):
 
     print("recorder starting ..")
 
@@ -24,10 +24,13 @@ def record(src_path, output_path):
     # create output_path
     os.mkdir(output_path)
 
+    # generate source filename with proper resolution
+    src_path_with_res = src_path.format(packet.RESOLUTIONS.get(resolution))
+
     # forever record until flag is false
     while recorder_running:
 
-        image_file = open(src_path, 'rb')
+        image_file = open(src_path_with_res, 'rb')
         image_bytes = image_file.read()
 
         image_file.close()
@@ -77,7 +80,7 @@ def handler(client_socket, address, src_path):
         # start new recorder thread as respond to the request
         output_path = time.strftime("%d-%m-%Y-%H-%M-%S")
 
-        recorder_thread = threading.Thread(target=record, args=(src_path, output_path))
+        recorder_thread = threading.Thread(target=record, args=(src_path, output_path, resolution))
         recorder_thread.start()
 
     elif command == packet.COMMAND_OFF:

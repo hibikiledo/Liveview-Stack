@@ -6,6 +6,7 @@ import socket
 
 from processes import streamer, eater, digester, recorder, feeder
 import config_loader
+import packet
 
 # specify whether this running stack is robot stack or server stack
 stack_type = None
@@ -60,15 +61,17 @@ if __name__ == '__main__':
 
         # Create processes
         a = Process(target=eater.eater, args=(config, ))
-        b = Process(target=digester.digester, args=(config, ))
-        c = Process(target=streamer.streamer, args=(config, ))
-        d = Process(target=recorder.server, args=(config, ))
+        b = Process(target=digester.digester, args=(config, packet.RES_480))
+        c = Process(target=digester.digester, args=(config, packet.RES_720))
+        d = Process(target=streamer.streamer, args=(config, packet.RES_480))
+        e = Process(target=recorder.server, args=(config, ))
 
         # Start all process
         a.start()
         b.start()
         c.start()
         d.start()
+        e.start()
 
         '''
         for i in range(2):
@@ -107,6 +110,7 @@ if __name__ == '__main__':
         b.join()
         c.join()
         d.join()
+        e.join()
 
     elif stack_type == 'robot':
 
